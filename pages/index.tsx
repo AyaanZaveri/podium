@@ -71,7 +71,12 @@ const Home: NextPage = () => {
                 }, 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.1)`,
               }}
               crossOrigin={"anonymous"}
-              src={rssJson?.channel?.image?.url}
+              src={
+                "https://cors-anywhere.7ih.repl.co/" +
+                rssJson?.channel?.image?.url
+                  .replace("https://", "")
+                  .replace("http://", "")
+              }
               ref={imgRef}
               alt=""
               onLoad={() => {
