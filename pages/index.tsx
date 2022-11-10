@@ -57,10 +57,10 @@ const Home: NextPage = () => {
       <div className="flex items-center w-2/3 flex-col gap-12">
         {rssJson?.channel?.image?.url &&
         rssJson?.channel?.title &&
-        rssJson?.channel["itunes:summary"] ? (
+        rssJson?.channel?.description ? (
           <div className="flex justify-start gap-8">
             <img
-              className={`w-64 h-64 rounded-xl shadow-slate-800/30 ${
+              className={`w-64 h-64 rounded-xl ${
                 imageLoaded ? "block" : "hidden"
               }`}
               style={{
