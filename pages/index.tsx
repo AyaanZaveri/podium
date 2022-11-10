@@ -1,86 +1,109 @@
-import type { NextPage } from 'next'
-import Head from 'next/head'
-import Image from 'next/image'
+import axios from "axios";
+import type { NextPage } from "next";
+import Head from "next/head";
+import Image from "next/image";
+import { useRef, useState } from "react";
+var convert = require("xml-js");
+// @ts-ignore
+import ColorThief from "../node_modules/colorthief/dist/color-thief.mjs";
 
 const Home: NextPage = () => {
+  const [rssJson, setRssJson] = useState<any>();
+  const [rssUrl, setRssUrl] = useState<any>();
+  const [imgDomColor, setImgDomColor] = useState<any>();
+  const imgRef = useRef<any>();
+
+  function RemoveJsonTextAttribute(value: any, parentElement: any) {
+    try {
+      var keyNo = Object.keys(parentElement._parent).length;
+      var keyName = Object.keys(parentElement._parent)[keyNo - 1];
+      parentElement._parent[keyName] = value;
+    } catch (e) {}
+  }
+
+  const getRssJson = () => {
+    if (rssUrl?.length > 2) {
+      axios
+        .get(
+          "https://cors-anywhere.7ih.repl.co/" +
+            rssUrl.replace("https://", "").replace("http://", "")
+        )
+        .then((res) =>
+          setRssJson(
+            JSON.parse(
+              convert.xml2json(res?.data, {
+                compact: true,
+                spaces: 4,
+                nativeType: true,
+                textFn: RemoveJsonTextAttribute,
+                cdataFn: RemoveJsonTextAttribute,
+              })
+            )?.rss
+          )
+        );
+    }
+  };
+
+  console.log(rssJson?.channel);
+
+  // https://feedproxy.google.com/WaveformWithMkbhd
+  // https://feeds.megaphone.fm/vergecast
+  // https://feeds.npr.org/510338/podcast.xml
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center py-2">
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+    <div className="flex min-h-screen flex-col items-center justify-center py-2 gap-6">
+      <div className="flex items-center w-2/3 flex-col gap-12">
+        {rssJson?.channel?.image?.url &&
+        rssJson?.channel?.title &&
+        rssJson?.channel["itunes:summary"] ? (
+          <div className="flex justify-start gap-8">
+            <img
+              className={`w-64 h-64 rounded-lg shadow-slate-800/30`}
+              style={{
+                boxShadow:
+                  `0 20px 25px -5px rgba(${imgDomColor?.length > 0 ? imgDomColor[0] : 0},${imgDomColor?.length > 0 ? imgDomColor[1] : 0},${imgDomColor?.length > 0 ? imgDomColor[2] : 0}, 0.3), 0 8px 10px -6px rgb(0 0 0 / 0.1)`,
+              }}
+              crossOrigin={"anonymous"}
+              src={rssJson?.channel?.image?.url}
+              ref={imgRef}
+              alt=""
+              onLoad={() => {
+                const colorThief = new ColorThief();
+                const img = imgRef.current;
+                const result = colorThief.getColor(img, 25);
+                setImgDomColor(result);
+              }}
+            />
+            <div className="flex flex-col gap-3 mt-3">
+              <span className="text-3xl font-bold text-slate-700">
+                {rssJson?.channel?.title}
+              </span>
 
-      <main className="flex w-full flex-1 flex-col items-center justify-center px-20 text-center">
-        <h1 className="text-6xl font-bold">
-          Welcome to{' '}
-          <a className="text-blue-600" href="https://nextjs.org">
-            Next.js!
-          </a>
-        </h1>
-
-        <p className="mt-3 text-2xl">
-          Get started by editing{' '}
-          <code className="rounded-md bg-gray-100 p-3 font-mono text-lg">
-            pages/index.tsx
-          </code>
-        </p>
-
-        <div className="mt-6 flex max-w-4xl flex-wrap items-center justify-around sm:w-full">
-          <a
-            href="https://nextjs.org/docs"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
+              <span
+                className="text-slate-700"
+                dangerouslySetInnerHTML={{
+                  __html: rssJson?.channel?.description,
+                }}
+              ></span>
+            </div>
+          </div>
+        ) : null}
+        <div className="flex flex-row gap-2 w-full">
+          <input
+            className="border rounded-md px-3 py-1.5 shadow-sm hover:bg-slate-50 active:bg-slate-100 transition duration-300 ease-in-out w-full outline-none focus:ring-amber-200 focus:ring focus:border-amber-500"
+            type="text"
+            onChange={(e) => setRssUrl(e.target.value)}
+          />
+          <button
+            className="border rounded-md w-44 px-5 py-1 shadow-sm hover:bg-slate-50 active:bg-slate-100 transition duration-300 ease-in-out outline-none focus:ring-amber-200 focus:ring focus:border-amber-500"
+            onClick={getRssJson}
           >
-            <h3 className="text-2xl font-bold">Documentation &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Find in-depth information about Next.js features and its API.
-            </p>
-          </a>
-
-          <a
-            href="https://nextjs.org/learn"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Learn &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Learn about Next.js in an interactive course with quizzes!
-            </p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/canary/examples"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Examples &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Discover and deploy boilerplate example Next.js projects.
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Deploy &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
+            Try Podcast
+          </button>
         </div>
-      </main>
-
-      <footer className="flex h-24 w-full items-center justify-center border-t">
-        <a
-          className="flex items-center justify-center gap-2"
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
-        </a>
-      </footer>
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;
